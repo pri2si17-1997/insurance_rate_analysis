@@ -1,0 +1,254 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Include Libraries
+
+```{r include=TRUE}
+library(ggplot2)
+library(readr)
+library(plyr)
+library(dplyr)
+library(maps)
+library(reshape2)
+library(viridis)
+```
+
+```{r include=TRUE}
+knitr::opts_chunk$set(fig.width=16, fig.height=8) 
+```
+
+# Read Data
+
+```{r include=TRUE}
+dataRate <- read.csv("Rate.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+```{r include=TRUE}
+head(dataRate)
+```
+
+# Chnage Age to integer
+
+```{r include=TRUE}
+dataRate$Age <- gsub('[a-zA-Z ]', '', dataRate$Age)
+dataRate$Age <- gsub('-', '', dataRate$Age)
+dataRate$Age <- as.integer(dataRate$Age)
+```
+
+# Explore Data
+
+```{r include=TRUE}
+head(dataRate)
+```
+
+```{r include=TRUE}
+# Column Names
+names(dataRate)
+```
+
+```{r include=TRUE}
+summary(dataRate)
+```
+
+```{r include=TRUE}
+# See data type of each column.
+sapply(dataRate,class)
+```
+
+# Select subset of data
+
+```{r include=TRUE}
+planRateBenefit <- subset(dataRate, (dataRate$IndividualRate < "9999" & Age != "Family Option"),
+                          select = c(StateCode, IssuerId, SourceName, Age, IndividualRate))
+planRateBenefit <- na.omit(planRateBenefit)
+sum(is.na(planRateBenefit))
+```
+
+```{r include=TRUE}
+head(planRateBenefit)
+```
+
+# Groupby State Code And Do analysis of 
+
+```{r include=TRUE}
+stateGroupedData <- planRateBenefit %>% group_by(StateCode)
+head(stateGroupedData)
+```
+
+## Group State By data with Source Name
+
+```{r include=TRUE}
+stateSourceGroupData <- stateGroupedData %>% group_by(SourceName) %>% summarise(IndividualRate = mean(IndividualRate))
+head(stateSourceGroupData)
+```
+
+## Box Plot for State ID and IndividualRate
+
+```{r include=TRUE}
+ggplot(data = stateGroupedData, aes(x=StateCode, y=IndividualRate)) + geom_boxplot()
+```
+
+## Box Plot for State ID and Age
+
+```{r include=TRUE}
+ggplot(data = stateGroupedData, aes(x=StateCode, y=Age)) + geom_boxplot()
+```
+
+## Bar Graph for Source Count Per State
+
+```{r include=TRUE}
+StateSource <- stateGroupedData%>% count(SourceName)
+head(StateSource)
+```
+
+```{r include=TRUE}
+ggplot(StateSource, aes(fill=SourceName, y=n, x=StateCode)) + geom_bar(position="stack", stat="identity")
+```
+
+## Check Normality of Individual Rate
+
+### Denisty Plot for IndividualRate
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(x=IndividualRate))+geom_density(color="darkblue", fill="lightblue")+ geom_vline(aes(xintercept=mean(IndividualRate)),
+            color="red", linetype="dashed", size=1)
+```
+
+### Q-Q Plot for IndividualRate
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(sample=IndividualRate), preserveLabels=TRUE)+stat_qq()+stat_qq_line()+xlab("Standard Normal Quantiles for Individual Rate") + ylab("Quantiles for Individual Rate")
+```
+
+### Data Transformation
+
+#### Log Transformation
+
+```{r include=TRUE}
+#
+head(stateGroupedData)
+stateGroupedData$IndividualRate <- log10(stateGroupedData$IndividualRate)
+#is.na(stateGroupedData)
+head(stateGroupedData)
+```
+
+### Density Plot after Log Transformation
+
+### Density Plot for IndividualRate after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(x=IndividualRate))+geom_density(color="darkblue", fill="lightblue")+ geom_vline(aes(xintercept=mean(IndividualRate)),
+            color="red", linetype="dashed", size=1)
+```
+
+### Q-Q Plot after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(sample=IndividualRate), preserveLabels=TRUE)+stat_qq()+stat_qq_line()+xlab("Standard Normal Quantiles for Individual Rate") + ylab("Quantiles for Individual Rate")
+```
+
+#### SquareRoot Transformation
+
+```{r include=TRUE}
+#
+stateGroupedData <- planRateBenefit %>% group_by(StateCode)
+head(stateGroupedData)
+stateGroupedData$IndividualRate <- sqrt(stateGroupedData$IndividualRate)
+#is.na(stateGroupedData)
+head(stateGroupedData)
+```
+
+### Density Plot after SquareRoot Transformation
+
+### Density Plot for IndividualRate after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(x=IndividualRate))+geom_density(color="darkblue", fill="lightblue")+ geom_vline(aes(xintercept=mean(IndividualRate)),
+            color="red", linetype="dashed", size=1)
+```
+
+### Q-Q Plot after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(sample=IndividualRate), preserveLabels=TRUE)+stat_qq()+stat_qq_line()+xlab("Standard Normal Quantiles for Individual Rate") + ylab("Quantiles for Individual Rate")
+```
+
+#### CubeRoot Transformation
+
+```{r include=TRUE}
+#
+stateGroupedData <- planRateBenefit %>% group_by(StateCode)
+head(stateGroupedData)
+stateGroupedData$IndividualRate <- stateGroupedData$IndividualRate^(1/3)
+#is.na(stateGroupedData)
+head(stateGroupedData)
+```
+
+### Density Plot after SquareRoot Transformation
+
+### Density Plot for IndividualRate after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(x=IndividualRate))+geom_density(color="darkblue", fill="lightblue")+ geom_vline(aes(xintercept=mean(IndividualRate)),
+            color="red", linetype="dashed", size=1)
+```
+
+### Q-Q Plot after Transformation
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(sample=IndividualRate), preserveLabels=TRUE)+stat_qq()+stat_qq_line()+xlab("Standard Normal Quantiles for Individual Rate") + ylab("Quantiles for Individual Rate")
+```
+
+### Kruskal Walis Test
+
+```{r include=TRUE}
+kruskal.test(IndividualRate~StateCode, stateGroupedData)
+```
+
+# T Test 1 sample
+
+```{r include=TRUE}
+t.test(stateGroupedData$IndividualRate, mu = 500)
+```
+
+# Anova
+
+```{r include=TRUE}
+one_way <- aov(IndividualRate~StateCode, data = stateGroupedData)
+summary(one_way)
+```
+
+## Check Dependance on Age
+
+```{r include=TRUE}
+one_way <- aov(IndividualRate~Age, data = stateGroupedData)
+summary(one_way)
+```
+
+## Linear Regression
+
+
+```{r include=TRUE}
+lmIndividualRate = lm(IndividualRate ~ Age, data=stateGroupedData)
+summary(lmIndividualRate)
+```
+
+# Correlation of Age and IndividualRate
+
+```{r include=TRUE}
+cor.test(~IndividualRate+Age, data=stateGroupedData)
+```
+
+# Scatterplot of Age and IndividualRate
+
+```{r include=TRUE}
+ggplot(stateGroupedData, aes(x=stateGroupedData$IndividualRate, y=stateGroupedData$Age)) + 
+    geom_point()
+```
+
+```{r include=TRUE}
+lmIndividualRate = lm(IndividualRate ~ Age+StateCode, data=stateGroupedData)
+summary(lmIndividualRate)
+```
